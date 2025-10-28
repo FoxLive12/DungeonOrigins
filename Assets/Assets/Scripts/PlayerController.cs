@@ -15,8 +15,7 @@ public class NewBehaviourScript : MonoBehaviour
     [Header("Attack Settings")]
     [SerializeField] private float attackDuration = 0.2f;
     [SerializeField] private float attackCooldown = 0.55f;
-    [SerializeField, Range(0.05f, 0.95f)]
-    private float hitMoment = 0.35f;
+    [SerializeField, Range(0.05f, 0.95f)] private float hitMoment = 0.35f;
     [SerializeField] private float attackReach = 0.75f;
     [SerializeField] private LayerMask hittableLayers;
 
@@ -35,8 +34,9 @@ public class NewBehaviourScript : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        inputActions = new PlayerInputActions();
 
-        if (spriteHolder == null)
+        if (!spriteHolder)
         {
             Debug.LogError("SpriteHolder не назначен в инспекторе!");
             enabled = false;
@@ -46,10 +46,8 @@ public class NewBehaviourScript : MonoBehaviour
         animator = spriteHolder.GetComponent<Animator>();
         spriteRenderer = spriteHolder.GetComponent<SpriteRenderer>();
 
-        if (animator == null) Debug.LogError("На SpriteHolder нет Animator!");
-        if (spriteRenderer == null) Debug.LogError("На SpriteHolder нет SpriteRenderer!");
-
-        inputActions = new PlayerInputActions();
+        if (!animator) Debug.LogError("На SpriteHolder нет Animator!");
+        if (!spriteRenderer) Debug.LogError("На SpriteHolder нет SpriteRenderer!");
     }
 
     private void OnEnable() => inputActions.Enable();
@@ -57,28 +55,14 @@ public class NewBehaviourScript : MonoBehaviour
 
     private void Update()
     {
-        moveInput = inputActions.Player.Move.ReadValue<Vector2>();
-        if (isAttacking) moveInput = Vector2.zero;
-
-
-        animator?.SetFloat("MoveX", moveInput.x);
-        animator?.SetFloat("MoveY", moveInput.y);
-        animator?.SetFloat("Speed", moveInput.sqrMagnitude);
-
-        if (moveInput.sqrMagnitude > 0.01f)
-        {
-            lastMoveDirection = moveInput.normalized;
-            animator?.SetFloat("LastMoveX", lastMoveDirection.x);
-            animator?.SetFloat("LastMoveY", lastMoveDirection.y);
-        }
-
+        ReadInput();
+        UpdateAnimator();
         HandleSpriteFlip();
         HandleAttackInput();
     }
 
     private void FixedUpdate()
     {
-
         if (isAttacking)
         {
             rb.velocity = Vector2.zero;
@@ -87,18 +71,37 @@ public class NewBehaviourScript : MonoBehaviour
         }
 
         Vector2 targetVelocity = moveInput.normalized * moveSpeed;
-        float lerpSpeed = (moveInput.magnitude > 0f) ? acceleration : deceleration;
+        float lerpSpeed = moveInput.magnitude > 0 ? acceleration : deceleration;
         currentVelocity = Vector2.Lerp(currentVelocity, targetVelocity, Time.fixedDeltaTime * lerpSpeed);
         rb.velocity = currentVelocity;
     }
 
+    private void ReadInput()
+    {
+        moveInput = inputActions.Player.Move.ReadValue<Vector2>();
+        if (isAttacking)
+            moveInput = Vector2.zero;
+    }
+
+    private void UpdateAnimator()
+    {
+        animator.SetFloat("MoveX", moveInput.x);
+        animator.SetFloat("MoveY", moveInput.y);
+        animator.SetFloat("Speed", moveInput.sqrMagnitude);
+
+        if (moveInput.sqrMagnitude > 0.01f)
+        {
+            lastMoveDirection = moveInput.normalized;
+            animator.SetFloat("LastMoveX", lastMoveDirection.x);
+            animator.SetFloat("LastMoveY", lastMoveDirection.y);
+        }
+    }
+
     private void HandleSpriteFlip()
     {
-        if (spriteRenderer == null) return;
-
-        float x = Mathf.Abs(moveInput.x) > 0.01f ? moveInput.x : lastMoveDirection.x;
-        if (x < -0.01f) spriteRenderer.flipX = true;
-        else if (x > 0.01f) spriteRenderer.flipX = false;
+        if (!spriteRenderer) return;
+        if (Mathf.Abs(lastMoveDirection.x) > 0.01f)
+            spriteRenderer.flipX = lastMoveDirection.x < 0f;
     }
 
     private void HandleAttackInput()
@@ -114,17 +117,16 @@ public class NewBehaviourScript : MonoBehaviour
 
     private IEnumerator PerformAttack()
     {
-        animator?.SetBool("IsAttacking", true);
+        animator.SetTrigger("Attack");
+        isAttacking = true;
+
+        yield return null; // ждём 1 кадр для перехода
 
         float hitTime = Mathf.Clamp01(hitMoment) * attackDuration;
-        yield return new WaitForSeconds(hitTime);
+        if (hitTime > 0f)
+            yield return new WaitForSeconds(hitTime);
 
         DoHitDetection();
-
-        float remaining = Mathf.Max(0f, attackDuration - hitTime);
-        yield return new WaitForSeconds(remaining);
-
-        animator?.SetBool("IsAttacking", false);
 
         isAttacking = false;
         nextAttackTime = Time.time + attackCooldown;
@@ -136,11 +138,7 @@ public class NewBehaviourScript : MonoBehaviour
         Collider2D[] hits = Physics2D.OverlapCircleAll(center, attackReach, hittableLayers);
 
         foreach (var h in hits)
-        {
-            var dmg = h.GetComponent<IDamageable>();
-            if (dmg != null)
-                dmg.TakeDamage(1);
-        }
+            h.GetComponent<IDamageable>()?.TakeDamage(1);
     }
 
     private void OnDrawGizmosSelected()
