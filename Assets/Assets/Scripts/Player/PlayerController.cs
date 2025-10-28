@@ -120,7 +120,7 @@ public class NewBehaviourScript : MonoBehaviour
         animator.SetTrigger("Attack");
         isAttacking = true;
 
-        yield return null; // ждём 1 кадр для перехода
+        yield return null;
 
         float hitTime = Mathf.Clamp01(hitMoment) * attackDuration;
         if (hitTime > 0f)

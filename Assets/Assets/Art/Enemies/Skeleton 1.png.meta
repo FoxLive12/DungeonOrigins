@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 7db2e778dc5621e4580f0c5d821f9c69
+guid: d0150e4d01211754aaf491bd2f285677
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -866,6 +866,48 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
+      name: Skeleton_36
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 114
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aa298ea0a28ff7e45ba50914b80543e8
+      internalID: -1273570894
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Skeleton_37
+      rect:
+        serializedVersion: 2
+        x: 41
+        y: 112
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b34cff2ace524cb47a383d4c1751bffa
+      internalID: 271687521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
       name: Skeleton_38
       rect:
         serializedVersion: 2
@@ -908,13 +950,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Skeleton_36
+      name: Skeleton_40
       rect:
         serializedVersion: 2
         x: 9
         y: 103
         width: 13
-        height: 22
+        height: 10
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -929,13 +971,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Skeleton_37
+      name: Skeleton_41
       rect:
         serializedVersion: 2
         x: 40
         y: 103
         width: 16
-        height: 20
+        height: 8
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1242,11 +1284,13 @@ TextureImporter:
       Skeleton_33: -1763432779
       Skeleton_34: 1527816934
       Skeleton_35: -895215168
-      Skeleton_36: 1563468274
-      Skeleton_37: -1236648184
+      Skeleton_36: -1273570894
+      Skeleton_37: 271687521
       Skeleton_38: -298954969
       Skeleton_39: 511884017
       Skeleton_4: 1847782867
+      Skeleton_40: 1563468274
+      Skeleton_41: -1236648184
       Skeleton_42: -316961270
       Skeleton_43: -908106902
       Skeleton_44: 1149529218
