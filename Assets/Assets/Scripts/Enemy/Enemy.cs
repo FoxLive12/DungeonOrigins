@@ -12,15 +12,24 @@ public class Enemy : MonoBehaviour, IDamageable
     [SerializeField] private float detectionRange = 5f;
     [SerializeField] private Transform target;
 
+    [Header("Death Settings")]
+    [SerializeField] private float deathDelay = 2f; // задержка перед уничтожением
+
     private int currentHealth;
     private Rigidbody2D rb;
     private Animator animator;
     private SpriteRenderer spriteRenderer;
+    private Collider2D col;
+
+    private Vector2 smoothDirection;
+    private bool isDead;
+    private bool isHit;
 
     private void Awake()
     {
         currentHealth = maxHealth;
         rb = GetComponent<Rigidbody2D>();
+        col = GetComponent<Collider2D>();
 
         if (!spriteHolder)
         {
@@ -35,7 +44,11 @@ public class Enemy : MonoBehaviour, IDamageable
 
     private void FixedUpdate()
     {
-        if (target == null) return;
+        if (isDead || isHit || target == null)
+        {
+            rb.velocity = Vector2.zero;
+            return;
+        }
 
         float distance = Vector2.Distance(transform.position, target.position);
         if (distance < detectionRange)
@@ -43,11 +56,12 @@ public class Enemy : MonoBehaviour, IDamageable
             Vector2 direction = (target.position - transform.position).normalized;
             rb.velocity = direction * moveSpeed;
 
-            animator.SetFloat("MoveX", direction.x);
-            animator.SetFloat("MoveY", direction.y);
-            animator.SetFloat("Speed", rb.velocity.sqrMagnitude);
+            smoothDirection = Vector2.Lerp(smoothDirection, direction, 0.15f);
+            animator.SetFloat("MoveX", smoothDirection.x);
+            animator.SetFloat("MoveY", smoothDirection.y);
+            animator.SetFloat("Speed", rb.velocity.magnitude);
 
-            if (Mathf.Abs(direction.x) > 0.01f)
+            if (Mathf.Abs(direction.x) > 0.05f)
                 spriteRenderer.flipX = direction.x < 0f;
         }
         else
@@ -59,33 +73,48 @@ public class Enemy : MonoBehaviour, IDamageable
 
     public void TakeDamage(int amount)
     {
+        if (isDead || isHit) return;
+
         currentHealth -= amount;
 
         if (currentHealth <= 0)
         {
-            Die();
+            StartCoroutine(DieRoutine());
         }
         else
         {
-            animator.SetTrigger("Hit");
-            StartCoroutine(FlashRed());
+            StartCoroutine(HitRoutine());
         }
     }
 
-    private IEnumerator FlashRed()
+    private IEnumerator HitRoutine()
     {
-        spriteRenderer.color = Color.red;
-        yield return new WaitForSeconds(0.1f);
-        spriteRenderer.color = Color.white;
+        isHit = true;
+        rb.velocity = Vector2.zero;
+
+        // Включаем анимацию удара
+        animator.SetTrigger("Hit");
+
+        // ждём, пока анимация проиграется (подгони под длину твоей анимации)
+        yield return new WaitForSeconds(0.4f);
+
+        isHit = false;
     }
 
-    private void Die()
+    private IEnumerator DieRoutine()
     {
+        isDead = true;
         rb.velocity = Vector2.zero;
         rb.simulated = false;
+        if (col) col.enabled = false;
 
+        // Запускаем анимацию смерти
         animator.SetTrigger("Die");
-        Destroy(gameObject, 0.6f);
+
+        // ждём, пока враг "лежит мёртвым"
+        yield return new WaitForSeconds(deathDelay);
+
+        Destroy(gameObject);
     }
 
     private void OnDrawGizmosSelected()

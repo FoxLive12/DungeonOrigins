@@ -205,7 +205,7 @@ GameObject:
   - component: {fileID: 659568524}
   - component: {fileID: 659568526}
   - component: {fileID: 659568525}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: SpriteHolder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -762,7 +762,7 @@ GameObject:
   - component: {fileID: 1607267398}
   - component: {fileID: 1607267397}
   - component: {fileID: 1607267396}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Enemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -782,10 +782,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteHolder: {fileID: 659568524}
-  maxHealth: 3
+  maxHealth: 5
   moveSpeed: 2
   detectionRange: 5
   target: {fileID: 1668219600}
+  deathDelay: 2
 --- !u!70 &1607267397
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -948,7 +949,7 @@ MonoBehaviour:
   attackReach: 0.75
   hittableLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
 --- !u!70 &1668219602
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
