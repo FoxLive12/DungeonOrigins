@@ -1,8 +1,8 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class NewBehaviourScript : MonoBehaviour
+public class NewBehaviourScript : MonoBehaviour, IDamageable
 {
     [Header("Movement Settings")]
     public float moveSpeed = 5f;
@@ -11,6 +11,16 @@ public class NewBehaviourScript : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Transform spriteHolder;
+
+    [Header("Health Settings")]
+    public int maxHealth = 5;
+    private int currentHealth;
+    private bool isInvincible;
+    private bool Die;
+
+    [SerializeField] private float invincibleDuration = 1f;
+    [SerializeField] private float knockbackForce = 6f;
+    [SerializeField] private float knockbackDecay = 8f; // чем больше — тем быстрее гаснет отбрасывание
 
     [Header("Attack Settings")]
     [SerializeField] private float attackDuration = 0.2f;
@@ -30,6 +40,7 @@ public class NewBehaviourScript : MonoBehaviour
 
     private bool isAttacking;
     private float nextAttackTime;
+    private bool isKnockbacked;
 
     private void Awake()
     {
@@ -38,7 +49,7 @@ public class NewBehaviourScript : MonoBehaviour
 
         if (!spriteHolder)
         {
-            Debug.LogError("SpriteHolder �� �������� � ����������!");
+            Debug.LogError("SpriteHolder не назначен в инспекторе!");
             enabled = false;
             return;
         }
@@ -46,15 +57,22 @@ public class NewBehaviourScript : MonoBehaviour
         animator = spriteHolder.GetComponent<Animator>();
         spriteRenderer = spriteHolder.GetComponent<SpriteRenderer>();
 
-        if (!animator) Debug.LogError("�� SpriteHolder ��� Animator!");
-        if (!spriteRenderer) Debug.LogError("�� SpriteHolder ��� SpriteRenderer!");
+        if (!animator) Debug.LogError("На SpriteHolder нет Animator!");
+        if (!spriteRenderer) Debug.LogError("На SpriteHolder нет SpriteRenderer!");
     }
 
     private void OnEnable() => inputActions.Enable();
     private void OnDisable() => inputActions.Disable();
 
+    private void Start()
+    {
+        currentHealth = maxHealth;
+    }
+
     private void Update()
     {
+        if (Die) return;
+
         ReadInput();
         UpdateAnimator();
         HandleSpriteFlip();
@@ -63,6 +81,14 @@ public class NewBehaviourScript : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (Die) return;
+
+        if (isKnockbacked) // если идёт отбрасывание
+        {
+            rb.velocity = Vector2.Lerp(rb.velocity, Vector2.zero, Time.fixedDeltaTime * knockbackDecay);
+            return;
+        }
+
         if (isAttacking)
         {
             rb.velocity = Vector2.zero;
@@ -106,7 +132,7 @@ public class NewBehaviourScript : MonoBehaviour
 
     private void HandleAttackInput()
     {
-        if (isAttacking) return;
+        if (isAttacking || isKnockbacked) return;
 
         if (inputActions.Player.Attack.triggered && Time.time >= nextAttackTime)
         {
@@ -148,8 +174,84 @@ public class NewBehaviourScript : MonoBehaviour
         Vector2 center = (Vector2)transform.position + dir * (attackReach * 0.6f);
         Gizmos.DrawWireSphere(center, attackReach);
     }
+
+    // ==========================
+    // === ПОЛУЧЕНИЕ УРОНА ===
+    // ==========================
+
+    public void TakeDamage(int amount)
+    {
+        if (Die || isInvincible) return;
+
+        currentHealth -= amount;
+        Debug.Log($"Игрок получил {amount} урона! Осталось HP: {currentHealth}");
+
+        if (currentHealth > 0)
+            StartCoroutine(DamageFeedback());
+        else
+            StartCoroutine(DieRoutine());
+    }
+
+    private IEnumerator DamageFeedback()
+    {
+        isInvincible = true;
+        isKnockbacked = true;
+
+        // 🔸 Отталкивание
+        Vector2 knockDir = (Vector2)transform.position - GetNearestEnemyPosition();
+        knockDir.Normalize();
+        rb.velocity = knockDir * knockbackForce;
+
+        // 🔸 Мигание (эффект урона)
+        for (int i = 0; i < 5; i++)
+        {
+            spriteRenderer.enabled = false;
+            yield return new WaitForSeconds(0.1f);
+            spriteRenderer.enabled = true;
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        yield return new WaitForSeconds(invincibleDuration - 0.5f);
+
+        isInvincible = false;
+        isKnockbacked = false;
+    }
+
+    private Vector2 GetNearestEnemyPosition()
+    {
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        if (enemies.Length == 0)
+            return (Vector2)transform.position - lastMoveDirection;
+
+        GameObject closest = enemies[0];
+        float closestDist = Vector2.Distance(transform.position, closest.transform.position);
+
+        foreach (var e in enemies)
+        {
+            float d = Vector2.Distance(transform.position, e.transform.position);
+            if (d < closestDist)
+            {
+                closestDist = d;
+                closest = e;
+            }
+        }
+
+        return closest.transform.position;
+    }
+
+    private IEnumerator DieRoutine()
+    {
+        Die = true;
+        rb.velocity = Vector2.zero;
+        animator.SetTrigger("Die");
+        Debug.Log("Игрок погиб!");
+
+        yield return new WaitForSeconds(1.2f);
+        // TODO: добавить перезапуск сцены или GameOver экран
+    }
 }
 
+// === Интерфейс ===
 public interface IDamageable
 {
     void TakeDamage(int amount);

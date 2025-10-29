@@ -764,7 +764,7 @@ GameObject:
   - component: {fileID: 1607267396}
   m_Layer: 3
   m_Name: Enemy
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -786,6 +786,11 @@ MonoBehaviour:
   moveSpeed: 2
   detectionRange: 5
   target: {fileID: 1668219600}
+  contactDamage: 1
+  attackRange: 1
+  attackWindup: 0.4
+  attackRecovery: 0.6
+  attackCooldown: 1.2
   deathDelay: 2
 --- !u!70 &1607267397
 CapsuleCollider2D:
@@ -879,7 +884,7 @@ GameObject:
   - component: {fileID: 1668219601}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -943,6 +948,10 @@ MonoBehaviour:
   acceleration: 10
   deceleration: 10
   spriteHolder: {fileID: 1331351732}
+  maxHealth: 5
+  invincibleDuration: 1
+  knockbackForce: 6
+  knockbackDecay: 8
   attackDuration: 0.2
   attackCooldown: 0.55
   hitMoment: 0.35
